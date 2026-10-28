@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Seaside Railways</title>
+<meta name="description" content="Did Britain's seaside resorts boom after the railway arrived, or were they already growing? Census figures for 68 resorts, 1801 to 1911, set against the year the line opened.">
+<meta property="og:title" content="Did the railway invent the seaside?">
+<meta property="og:description" content="Britain's resorts were already growing before the trains came. The line brought a burst in the decade it opened, and resorts outgrew inland towns of the same size over the century.">
+<meta property="og:image" content="https://tristan-hotham.github.io/seaside-railways/header.png">
+<meta property="og:url" content="https://tristan-hotham.github.io/seaside-railways/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Sand and sea. Blue = seaside resorts. Ochre = inland towns. Brick red = the railway. */
+:root{
+  --bg:#F5EFE1; --panel:#EAE1CB; --fg:#1D2328; --muted:#5E6468; --rule:#DCD1B8; --card:#FBF8F0; --border:#C9BC9E;
+  --sea:#1C6B93; --inl:#B06A26; --rail:#B23A2E; --wd:#8C8F86; --pale:#9CC3D8;
+  --d0:#0B3550; --d1:#1C6B93; --d2:#3C8DB5; --d3:#6FAECB; --d4:#A6CCDD; --d5:#D4B47A; --nr:#B9B1A0;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12181C; --panel:#1B2329; --fg:#ECE7DA; --muted:#A3A9AC; --rule:#2D373E; --card:#172026; --border:#3C4850;
+  --sea:#5FA9D3; --inl:#E09A55; --rail:#E66A57; --wd:#8F948D; --pale:#2E5C78;
+  --d0:#CFE6F2; --d1:#8FC4E0; --d2:#5FA9D3; --d3:#3C86B0; --d4:#2A6489; --d5:#C29A5A; --nr:#555; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12181C; --panel:#1B2329; --fg:#ECE7DA; --muted:#A3A9AC; --rule:#2D373E; --card:#172026; --border:#3C4850;
+  --sea:#5FA9D3; --inl:#E09A55; --rail:#E66A57; --wd:#8F948D; --pale:#2E5C78;
+  --d0:#CFE6F2; --d1:#8FC4E0; --d2:#5FA9D3; --d3:#3C86B0; --d4:#2A6489; --d5:#C29A5A; --nr:#555; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 18px/1.62 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:hidden}
+.wrap{max-width:680px;margin:0 auto;padding-block:28px 64px}
+.wrap .bleed{width:min(1080px,calc(100vw - 32px));margin-left:calc((100% - min(1080px,100vw - 32px))/2);margin-right:0}
+a{color:inherit;text-decoration-color:var(--sea);text-underline-offset:3px}
+.kicker{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.kicker b{background:var(--sea);color:#fff;padding:5px 8px;font-weight:500}
+header.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 24px;align-items:end;border-bottom:6px double var(--fg);padding-bottom:22px;margin-top:18px}
+h1{font:900 clamp(46px,11vw,96px)/.9 var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--sea)}
+.mark{width:clamp(96px,22vw,190px);height:auto;display:block}
+.dek{grid-column:1/-1;font-size:21px;line-height:1.42;margin:8px 0 0;max-width:46ch}
+.byline{font:400 13px/1.4 var(--mono);color:var(--muted);margin-top:14px}
+h2{font:800 34px/1.04 var(--display);letter-spacing:-.01em;margin:52px 0 10px;text-wrap:balance}
+h2 .n{font:500 13px/1 var(--mono);color:var(--sea);display:block;letter-spacing:.1em;margin-bottom:10px}
+h3{font:600 20px/1.25 var(--display);margin:28px 0 6px}
+p{margin:0 0 16px}
+.lede::first-letter{font:900 72px/.8 var(--display);float:left;margin:6px 10px 0 0;color:var(--sea)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:26px 0 8px}
+.stats div{background:var(--card);padding:14px 12px}
+.stats b{display:block;font:900 clamp(28px,6vw,40px)/1 var(--display);color:var(--fg)}
+.stats b.h{color:var(--sea)}.stats b.r{color:var(--rail)}
+.stats span{font:400 12px/1.35 var(--mono);color:var(--muted);display:block;margin-top:6px}
+@media (max-width:600px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.figure{margin:26px 0 30px}
+.fig-h{font:600 19px/1.25 var(--display);margin:0 0 4px}
+.fig-sub{font:400 13px/1.45 var(--mono);color:var(--muted);margin:0 0 12px}
+.src{font:400 12px/1.45 var(--mono);color:var(--muted);margin-top:10px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:var(--mono);fill:var(--fg)}
+.lab{font-size:12px}.lab.m{fill:var(--muted)}.lab.b{font-weight:500}.lab.s{font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font:400 12px/1.45 var(--mono);padding:8px 10px;border-radius:3px;max-width:270px;z-index:1000;transform:translate(-50%,calc(-100% - 12px));display:none}
+.tip b{font-weight:500}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.btn{font:500 12px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:8px 10px;cursor:pointer;min-height:36px}
+.btn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn:focus-visible,input:focus-visible{outline:2px solid var(--sea);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;max-width:100%;flex-wrap:wrap}
+.seg .btn{border:0;border-radius:0;border-right:1px solid var(--border)}
+.seg .btn:last-child{border-right:0}
+.slider{display:flex;gap:10px;align-items:center;flex:1 1 260px;min-width:0}
+.slider input{flex:1;min-width:0;accent-color:var(--rail)}
+.yearbig{font:900 34px/1 var(--display);min-width:3.2ch;color:var(--rail)}
+#lmap{height:640px;border:1px solid var(--border);background:var(--panel);border-radius:2px}
+@media (max-width:600px){#lmap{height:520px}}
+.leaflet-container{font:400 12px/1.4 var(--mono);background:var(--panel)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card);color:var(--fg);border-radius:3px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.leaflet-popup-content{margin:12px 14px;font:400 12.5px/1.45 var(--mono);min-width:220px}
+.leaflet-container a.leaflet-popup-close-button{color:var(--muted)}
+.leaflet-bar a,.leaflet-bar a:hover{background:var(--card);color:var(--fg);border-bottom-color:var(--border)}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--card) 85%,transparent)!important;color:var(--muted)}
+.leaflet-control-attribution a{color:var(--fg)}
+.pop b.t{font:600 17px/1.2 var(--display);display:block;margin-bottom:2px}
+.pop .c{color:var(--muted);margin-bottom:6px}
+.pop dl{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;margin:4px 0 6px}
+.pop dt{color:var(--muted)}.pop dd{margin:0}
+.pop .note{font-size:11.5px;color:var(--muted);margin:4px 0}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font:400 12px/1.3 var(--mono);color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.pull{font:600 26px/1.25 var(--display);border-left:6px solid var(--sea);padding:4px 0 4px 18px;margin:30px 0}
+.note{background:var(--panel);border:1px solid var(--rule);padding:14px 16px;font-size:16px;margin:22px 0}
+.note h3{margin-top:0}
+table.t{width:100%;border-collapse:collapse;font:400 13px/1.35 var(--mono)}
+table.t th{text-align:left;font-weight:500;color:var(--muted);border-bottom:2px solid var(--fg);padding:6px 8px 6px 0}
+table.t td{border-bottom:1px solid var(--rule);padding:7px 8px 7px 0;vertical-align:top}
+table.t td.num,table.t th.num{text-align:right;white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+@media (max-width:700px){.cards{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--sea);padding:12px 14px;font:400 13px/1.5 var(--mono)}
+.card b{font:600 19px/1.2 var(--display);display:block;margin-bottom:2px}
+.card .big{font:900 24px/1.05 var(--display);margin:8px 0 2px}
+.card .big span{color:var(--muted);font:400 12px/1.35 var(--mono);display:block;margin-top:3px}
+.card svg{display:block;width:100%;height:auto;margin-top:6px}
+.find{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.find input{flex:1 1 220px;min-width:0;font:400 16px/1.2 var(--mono);padding:9px 10px;border:1px solid var(--border);border-radius:3px;background:var(--card);color:var(--fg)}
+#findout{background:var(--card);border:1px solid var(--border);padding:12px 14px;min-height:80px;font:400 13px/1.5 var(--mono)}
+#findout b.t{font:600 20px/1.2 var(--display);display:block}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.cta a{font:500 13px/1 var(--mono);text-decoration:none;border:1px solid var(--fg);padding:11px 14px;border-radius:3px}
+.cta a.p{background:var(--sea);border-color:var(--sea);color:#fff}
+footer{border-top:6px double var(--fg);margin-top:56px;padding-top:16px;font:400 13px/1.55 var(--mono);color:var(--muted)}
+footer p{margin:0 0 10px}
+.theme{position:fixed;right:12px;bottom:12px;z-index:1002}
+@media print{.theme,.controls{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker"><b>Data study</b><span>History × data</span><span>Britain, 1801 to 1911</span></div>
+<header class="hero">
+  <h1>Did the railway invent the <em>seaside</em>?</h1>
+  <svg class="mark" viewBox="0 0 200 120" aria-hidden="true"><g id="heroMark"></g></svg>
+  <p class="dek">The Victorian seaside is usually told as a railway story: the line arrives, the day trippers pour off the excursion trains, and a fishing village becomes Blackpool. I followed {{coverage.resorts_with_census|int}} resorts through every census from 1801 to 1911 to see whether they boomed after the trains came, or were already growing.</p>
+</header>
+<div class="byline">Dr Tristan Hotham, Independent researcher · October 2026 · Data: census figures via A Vision of Britain through Time, Wikipedia, Wikidata, OS Open Names</div>
+
+<div class="stats">
+  <div><b class="h">{{pre1831.resort.median|f1}}%</b><span>a year: typical resort growth 1801 to 1831, before any line reached them (inland towns: {{pre1831.inland.median|f1}}%)</span></div>
+  <div><b class="r">{{reg.resort_event.4.coef|sf1}}</b><span>points a year: the extra growth in the decade the railway arrived, against the decade before</span></div>
+  <div><b class="h">{{long.resort.median_mult|x1}}×</b><span>typical resort growth over nine comparable census decades, 1801 to 1911 (inland towns: {{long.inland.median_mult|x1}}×)</span></div>
+  <div><b>{{arrival.y1840s|int}}</b><span>resorts got their first station in the 1840s, more than in any other decade</span></div>
+</div>
+
+<p class="lede">In 1801 Weston-super-Mare was a village of {{cases.Weston-super-Mare.series.0.pop|int}} people. By 1911 it held {{long.published.Weston-super-Mare.pop1911|int}}. Blackpool went from {{long.published.Blackpool.pop1801|int}} to {{long.published.Blackpool.pop1911|int}}. Stories like these are why the railway gets the credit for the British seaside: the cheap excursion ticket, the Wakes Weeks, the mill towns emptying onto the sands.</p>
+<p>But Brighton was already a fashionable town of {{cases.Brighton.series.4.pop|int}} people when its London line opened in {{cases.Brighton.rail_year|raw}}, and Margate and Scarborough had been bathing places since the eighteenth century, reached by road and by boat. So which was it? Did the railway make the resorts, or did it simply follow the money to towns that were growing anyway?</p>
+<p>Canal Mania, my earlier study, asked the same kind of question about canals and found the canal towns were already rising before the first spade went in. Here I use a sharper tool. For each resort I find the year its railway opened, then line up its census growth decade by decade before and after that year. If the railway invented the seaside, growth should jump when the line arrives and not before.</p>
+
+<h2><span class="n">01 · The lines reach the sea</span>When the railway came</h2>
+<p>Wikipedia's list of seaside resorts in the United Kingdom has {{coverage.list_places|int}} places on it (I left out {{coverage.list_not_places|int}} entries that are beaches, peninsulas or stretches of coast). For {{arrival.n|int}} of them I could date the railway: the earliest opening year of any station within 3 km, from Wikidata, checked against the resort's own Wikipedia article. {{coverage.no_station_3km|int}} never had a station that close.</p>
+<p>Press play to watch the network reach the coast. Each dot turns solid in the year its first station opened; its colour shows the decade. The bigger dots are the {{coverage.resorts_with_census|int}} resorts with census figures, sized by their 1911 population. Tap any dot for its railway date, station and census figures.</p>
+<div class="figure bleed">
+  <div class="controls">
+    <button class="btn" id="play" aria-pressed="false">▶ Play</button>
+    <div class="slider"><span class="yearbig" id="yr">1911</span><input type="range" id="year" min="1825" max="1911" step="1" value="1911" aria-label="Show railways open by this year"></div>
+  </div>
+  <div id="lmap" role="region" aria-label="Map of British seaside resorts coloured by the decade their railway arrived"></div>
+  <div class="legend" id="legend"></div>
+  <div class="src">Resorts: Wikipedia, List of seaside resorts in the United Kingdom, and each resort article's coordinates. Railway year: earliest Wikidata opening date (P1619) of a station within 3 km, with {{coverage.rail_overrides_list|int}} corrections from the resort's own article where Wikidata holds a later rebuilding date. Click the map to let the scroll wheel zoom it.</div>
+</div>
+
+<div class="figure">
+  <div class="fig-h">Resorts reached by the railway, by decade</div>
+  <div class="fig-sub">First station within 3 km of the resort, {{arrival.n|int}} resorts.</div>
+  <div class="chart" id="decades"></div>
+</div>
+<p>The rush came early. The first line in my data touched the sea in {{arrival.earliest|raw}} and {{arrival.y1840s|int}} resorts got a station in the 1840s, the decade of the railway mania. Half of them had one by {{arrival.median|raw}}. The last stragglers waited until the 1900s, among them Lyme Regis and Dornoch.</p>
+<p>Who got the railway first? Resorts close to the big industrial towns did. Taking the ten largest English towns of 1861 (London, Liverpool, Manchester, Birmingham, Leeds, Sheffield, Bristol, Plymouth, Newcastle and Bradford), resorts in England and Wales within 50 km of one got their line in a median year of {{distance.bands.0.median_year|raw}}. Those more than 150 km away waited until {{distance.bands.3.median_year|raw}}. The rank correlation between distance and arrival year is {{distance.spearman|f2}} ({{distance.n|int}} resorts, p = {{distance.p|f3}}): clear, but far from perfect.</p>
+<div class="figure">
+  <div class="fig-h">Railway arrival by distance from the nearest big town</div>
+  <div class="fig-sub">Median year of the first station, England and Wales resorts, by distance to the nearest of the ten largest English towns of 1861.</div>
+  <div class="chart" id="dist"></div>
+  <div class="src">Town ranking: Wikipedia, List of towns and cities in England by historical population (1861 table). Points: OS Open Names. Scottish resorts are left out because the ranking covers England only.</div>
+</div>
+
+<h2><span class="n">02 · Before the trains</span>Were they already growing?</h2>
+<p>The cleanest test is to look at the years when no resort in my census sample had a railway at all. The first lines here opened in the late 1830s, so the three decades from 1801 to 1831 are pure pre-railway time. For {{pre1831.resort.n|int}} resorts I have all three decades.</p>
+<p>Their typical growth was {{pre1831.resort.median|f2}}% a year. For comparison I drew a random sample of {{coverage.inland_tried|int}} towns at least 25 km from the sea and found census series for {{coverage.inland_with_census|int}} of them: their typical growth was {{pre1831.inland.median|f2}}% a year, and the difference is well within chance (Mann-Whitney p = {{pre1831.mw_resort_inland_p|f2}}). A third group, {{pre1831.inland_wikidata.n|int}} inland villages and small towns with census figures in Wikidata, grew {{pre1831.inland_wikidata.median|f2}}% a year.</p>
+<div class="figure">
+  <div class="fig-h">Growth 1801 to 1831, before any railway</div>
+  <div class="fig-sub">Each dot is one place: average annual growth over the three decades. Lines mark the medians.</div>
+  <div class="chart" id="pre"></div>
+  <div class="src">Annual growth = 100 × ln(later population / earlier population) / 10, averaged over 1801 to 1811, 1811 to 1821 and 1821 to 1831. Places with fewer than three of these decades are left out.</div>
+</div>
+<p>So the resorts were already growing as fast as ordinary market and industrial towns, and much faster than the villages, before any train ran. Some were racing: Weston-super-Mare grew {{pre1831.fastest_resorts.0.g|f1}}% a year, Brighton {{pre1831.fastest_resorts.1.g|f1}}% and Torquay {{pre1831.fastest_resorts.2.g|f1}}%. Those are boom-town rates, decades before the line.</p>
+<p class="pull">The railway did not find empty beaches. It found towns that were already growing.</p>
+
+<h2><span class="n">03 · The event study</span>What happened when the line opened?</h2>
+<p>Now the main test. For each resort I count decades relative to the railway: the census decade in which the line opened is decade 0, the one before is minus 1, the one after is plus 1, and so on. Then I average growth at each step. The same is done for the inland towns, relative to their own railway.</p>
+<div class="figure">
+  <div class="fig-h">Growth before and after the railway arrived</div>
+  <div class="fig-sub">Mean annual growth in each census decade, counted from the decade the first station opened (0). Points with fewer than 5 places are not shown; the number of places is printed under each point.</div>
+  <div class="seg" role="group" aria-label="Groups shown" style="margin-bottom:10px">
+    <button class="btn" data-ev="both" aria-pressed="true">Resorts and inland towns</button>
+    <button class="btn" data-ev="wd" aria-pressed="false">Add inland villages</button>
+  </div>
+  <div class="chart" id="event"></div>
+  <div class="src">Census decades in England and Wales skip 1851 to 1871 (the parish tables give no 1861 figure), so some resorts lack the decades straight after an 1850s or 1860s line. Scottish parishes are complete.</div>
+</div>
+<p>The resorts' line is flat and high before the railway: around {{phases.resort.before.mean|f1}}% a year on average. In the decade the line opens it jumps, and it stays a little higher afterwards ({{phases.resort.after.mean|f1}}% on average). The inland towns also spike in their railway decade, but from a much smaller set of places, and afterwards they settle back below their earlier pace.</p>
+<p>Averages like these mix different resorts and different decades. So I also fitted a regression with a separate baseline for every resort and every census decade, which compares each resort with itself and allows for the national ups and downs. Against the decade just before the railway, resort growth was {{reg.resort_event.4.coef|f2}} points a year higher in the decade it arrived (95% interval {{reg.resort_event.4.lo|f2}} to {{reg.resort_event.4.hi|f2}}) and {{reg.resort_event.5.coef|f2}} points higher in the decade after ({{reg.resort_event.5.lo|f2}} to {{reg.resort_event.5.hi|f2}}). The decades before the railway show no build-up: their estimates sit between {{reg.resort_event.0.coef|sf2}} and {{reg.resort_event.1.coef|sf2}}.</p>
+<div class="figure">
+  <div class="fig-h">The railway bump, allowing for each resort and each decade</div>
+  <div class="fig-sub">Extra growth (points a year) compared with the decade before the railway. Bars show 95% intervals. {{reg.resort_only_n|int}} resort decades.</div>
+  <div class="chart" id="coef"></div>
+  <div class="src">Least squares with resort and census-decade fixed effects; standard errors clustered by resort. Decades more than 4 before or 5 after are pooled into the end points.</div>
+</div>
+<p>Is that bump special to the seaside? Not on this evidence. When I put the resorts and inland towns in one model, the inland towns grew {{reg.after_inland.coef|f2}} points a year faster after their railway than before, and the resorts' extra gain on top of that was {{reg.after_x_resort.coef|f2}} points (95% interval {{reg.after_x_resort.lo|f2}} to {{reg.after_x_resort.hi|f2}}). In other words, I cannot tell the resorts' railway effect apart from the inland towns'. Against the inland villages, which were losing people in the later nineteenth century, the resorts do look different (an extra {{reg.wd_after_x_resort.coef|f2}} points a year), but that comparison says more about rural decline than about the seaside.</p>
+
+<h2><span class="n">04 · Resort by resort</span>Faster after, or not?</h2>
+<p>A simpler check: for each place, compare average growth over up to three decades before the railway with up to three decades after. {{per_place.resort.n_faster_after|int}} of {{per_place.resort.n|int}} resorts grew faster afterwards; the typical change was {{per_place.resort.median_change|sf2}} points a year. For the inland towns it was {{per_place.inland.n_faster_after|int}} of {{per_place.inland.n|int}}, with a typical change of {{per_place.inland.median_change|sf2}}. That difference leans towards the resorts but is not conclusive with so few inland towns (Mann-Whitney p = {{per_place.mw_resort_vs_inland_p|f2}}).</p>
+<div class="figure">
+  <div class="fig-h">Before and after the railway, each resort</div>
+  <div class="fig-sub">Average annual growth over up to three census decades before the line opened (hollow) and after (solid). Sorted by the change. Hover or tap for details.</div>
+  <div class="chart" id="dumb"></div>
+</div>
+<p>The two ends of the chart tell the real story. At the top are the places the railway did transform: {{per_place.resort_rows.0.place|raw}}, {{per_place.resort_rows.1.place|raw}}, {{per_place.resort_rows.2.place|raw}}, {{per_place.resort_rows.3.place|raw}}, {{per_place.resort_rows.4.place|raw}}, {{per_place.resort_rows.5.place|raw}} and {{per_place.resort_rows.6.place|raw}}, most of them growing slowly, or not at all, before the line. At the bottom are the resorts that had boomed before it: Weston-super-Mare grew {{per_place.resort_rows.-1.before|f1}}% a year in the decades before its railway and {{per_place.resort_rows.-1.after|f1}}% after; Torquay, Brighton, Clevedon and Ramsgate tell the same story. For them the railway arrived after the boom, not before it.</p>
+
+<h2><span class="n">05 · The long run</span>A century of sand and steam</h2>
+<p>Over the whole period the resorts did grow more than inland towns, though by less than the famous cases suggest. Because parish boundaries moved, I measure long-run growth by chaining the same-boundary decades from 1801 to 1851 and from 1871 to 1911 (the nine decades every series in England and Wales can pair). Over those nine decades the typical resort multiplied its population {{long.resort.median_mult|x1}} times ({{long.resort.n|int}} resorts with all nine); the typical inland town {{long.inland.median_mult|x1}} times ({{long.inland.n|int}} towns). With so few inland towns that gap could be chance (Mann-Whitney p = {{long.mw_p|f2}}).</p>
+<p>Because small places can grow faster, I also paired each resort with the inland town closest to it in 1801 population. In {{matched.resort_bigger_growth|int}} of {{matched.n_with_1911|int}} pairs the resort grew more (sign test p = {{matched.sign_p|f2}}), and the typical resort grew {{matched.median_ratio|f2}} times as much as its partner.</p>
+<div class="figure">
+  <div class="fig-h">Biggest risers, 1801 to 1911</div>
+  <div class="tablewrap"><table class="t" id="toptab"></table></div>
+  <div class="src">Published figures for the resort's census parish or township in 1801 and 1911, and growth chained over the nine same-boundary decades (1801 to 1851 and 1871 to 1911). Blackpool has no full series and is not in the table.</div>
+</div>
+
+<h3>Find your resort</h3>
+<p>Type a resort's name to see its census figures and the year its railway arrived.</p>
+<div class="find"><input id="q" list="names" placeholder="e.g. Skegness" aria-label="Resort name"><datalist id="names"></datalist></div>
+<div id="findout">Start typing a resort name.</div>
+
+<h2><span class="n">06 · Two kinds of resort</span>Built by the railway, or found by it?</h2>
+<p>The story of the railway resort is real for some places. Six cases show the range. In each small chart the line is the census population (on a log scale, so equal slopes mean equal rates of growth) and the red mark is the railway.</p>
+<div class="cards" id="cards"></div>
+<p>I also split the resorts by their size in 1801. The {{types.small.n|int}} that had fewer than 1,000 people, places like Frinton, Skegness, Weston and Llandudno, look like the railway's creations. The {{types.established.n|int}} established towns, like Brighton, Margate, Scarborough and Great Yarmouth, look like towns it found. But measured by the change in growth around the railway, the two groups behave much the same: {{types.small.share_faster_after|pct}} of the small places with enough decades grew faster after the line, against {{types.established.share_faster_after|pct}} of the established ones.</p>
+
+<h2><span class="n">07 · Verdict</span>So did the railway invent the seaside?</h2>
+<p>No, not on these figures. The resorts were growing as fast as any inland town before the first train ran, and some of the famous ones were growing faster than almost anywhere. The railway brought a clear burst in the decade it arrived, worth about {{reg.resort_event.4.coef|f1}} points of growth a year, and the resorts kept on growing for the rest of the century, outgrowing inland towns of the same starting size in {{matched.resort_bigger_growth|int}} of {{matched.n_with_1911|int}} pairs.</p>
+<p>What the railway did was make the seaside bigger, sooner, and for many more people. It reached the resorts nearest the industrial towns first, and the burst of the arrival decade is clear. But inland towns that got lines show a lift I cannot tell apart from the resorts', so the rails alone do not explain the seaside's edge. That edge was already there before the trains, and it lasted: the sea, the holiday, and the money of the towns at the other end of the line.</p>
+
+<div class="note">
+<h3>How I did this, and what to watch out for</h3>
+<p><b>Resorts.</b> Every place on Wikipedia's List of seaside resorts in the United Kingdom ({{coverage.list_entries|int}} entries; {{coverage.list_places|int}} are places), placed with the coordinates in its article ({{coverage.coord_from_osnames|int}} from OS Open Names). Northern Ireland's {{coverage.list_places_ni|int}} resorts are on the map but have no census series here.</p>
+<p><b>Railway year.</b> The earliest Wikidata opening date (P1619) of any station within 3 km. Wikidata sometimes holds the date of a rebuilt station, so I compared it with the resort's own Wikipedia article and used the article's year where it was earlier ({{coverage.rail_overrides_list|int}} resorts, all quoted in data/resorts.csv), and corrected {{coverage.rail_overrides_inland|int}} inland towns from their station articles. A station 3 km away is not the same as a line into the town centre, and opening years do not say how good the service was.</p>
+<p><b>Census figures.</b> Total population of each resort's census parish or township, 1801 to 1911, from the "Total Population" pages of A Vision of Britain through Time (University of Portsmouth), which reproduce the published census reports. I read {{coverage.n_population_figures|int}} figures from those pages with an automated web reader and recorded each with its page link in data/vob_transcriptions.tsv. All {{coverage.checks_n|int}} figures I could check against numbers quoted on Wikipedia matched exactly. I found usable series for {{coverage.resorts_with_census|int}} of the {{coverage.list_places_gb|int}} resorts in Great Britain, {{coverage.resorts_full_1801_1911|int}} with both 1801 and 1911; many others are suburbs, or were split between parishes, or were created as parishes too late. The sample leans towards England and towards resorts that were separate parishes.</p>
+<p><b>Growth.</b> Each decade's growth uses the figure for ten years earlier restated on the same boundary where the census printed one. The English and Welsh parish tables have no 1861 figure, so I do not use 1851 to 1871 for those places rather than risk a boundary change looking like growth. Parishes are not towns: a resort can be a small part of a large parish (Perranporth in Perranzabuloe) or one of several (Hastings, left out).</p>
+<p><b>Comparisons.</b> Inland towns: a random sample (seed 1801) of {{coverage.inland_tried|int}} OS Open Names towns at least 25 km from the sea; I found census series for {{coverage.inland_with_census|int}}. Inland villages: {{coverage.wikidata_parishes|int}} Wikidata places with census figures, mostly in Cambridgeshire, Huntingdonshire, Dorset and Somerset, so a rough check only. None of this proves cause: railways were built to places expected to pay, which is exactly the problem the before-and-after design tries to handle.</p>
+</div>
+
+<h2><span class="n">08 · Sources</span>Data and licences</h2>
+<ul>
+<li>Census populations 1801 to 1911: Census of England and Wales and Census of Scotland reports, as tabulated by A Vision of Britain through Time, University of Portsmouth, <a href="https://www.visionofbritain.org.uk/">visionofbritain.org.uk</a>. Each figure is linked to its page in the data.</li>
+<li>Resort list, resort articles, town ranking: Wikipedia, CC BY-SA 4.0, retrieved 27 and 28 October 2026.</li>
+<li>Station opening dates and village census figures: Wikidata, CC0.</li>
+<li>Town points: OS Open Names, contains OS data © Crown copyright and database right 2026, Open Government Licence v3.0.</li>
+<li>Coastline: Natural Earth, public domain. Map tiles: Esri.</li>
+</ul>
+<div class="cta">
+  <a class="p" href="https://doi.org/10.5281/zenodo.23727127">Read the paper</a>
+  <a href="https://github.com/Tristan-Hotham/seaside-railways">Data and code</a>
+  <a href="https://blog.tristanhotham.com/2026/10/28/seaside-railways/">Blog post</a>
+  <a href="https://tristan-hotham.github.io/canal-mania/">Canal Mania</a>
+  <a href="https://blog.tristanhotham.com/">More history data</a>
+</div>
+
+<footer>
+  <p>Dr Tristan Hotham, Independent researcher. ORCID 0000-0003-4931-9349. Cite as: Hotham, T. (2026) Did the Railway Invent the Seaside? Census Growth of British Resorts Before and After the Line Arrived, 1801 to 1911. Zenodo. https://doi.org/10.5281/zenodo.23727127</p>
+  <p>I wrote the text, with drafting and editing assistance from Claude (Anthropic), which also helped prepare the analysis code. I reviewed and checked all text and results.</p>
+  <p>Census figures: A Vision of Britain through Time (University of Portsmouth), from the published census reports. Wikipedia text and tables: CC BY-SA 4.0. Wikidata: CC0. OS Open Names: contains OS data © Crown copyright and database right 2026, OGL v3. Coastline: Natural Earth (public domain). Tiles © Esri.</p>
+  <p>Data and page text: CC BY-SA 4.0. Code: MIT licence.</p>
+</footer>
+</div>
+<div class="tip" id="tip"></div>
+<button class="btn theme" id="theme" aria-label="Toggle dark mode">◐</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const D = /*SITE*/;
+const R = /*RESULTS*/;
+const NS = "http://www.w3.org/2000/svg";
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const fmt = n => n == null ? "n/a" : Math.round(n).toLocaleString("en-GB");
+const f1 = n => n == null ? "n/a" : n.toFixed(1);
+const sg = n => (n > 0 ? "+" : n < 0 ? "-" : "") + Math.abs(n).toFixed(2);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const tip = document.getElementById("tip");
+function showTip(h, x, y) { tip.innerHTML = h; tip.style.display = "block"; const w = tip.offsetWidth; x = Math.max(w / 2 + 8, Math.min(innerWidth - w / 2 - 8, x)); tip.style.left = x + scrollX + "px"; tip.style.top = y + scrollY + "px"; }
+function hideTip() { tip.style.display = "none"; }
+function hover(node, h) { node.style.cursor = "pointer"; node.setAttribute("tabindex", "0"); const s = () => { const r = node.getBoundingClientRect(); showTip(h, r.left + r.width / 2, r.top); }; node.addEventListener("pointerenter", s); node.addEventListener("pointerleave", hideTip); node.addEventListener("focus", s); node.addEventListener("blur", hideTip); node.addEventListener("click", e => { s(); e.stopPropagation(); }); }
+document.addEventListener("click", hideTip);
+const redraws = [];
+function resp(box, render) { let last = 0; const go = (force) => { const w = Math.max(280, Math.round(box.clientWidth)); if (!force && Math.abs(w - last) < 4) return; last = w; box.innerHTML = ""; render(w, w < 560); }; new ResizeObserver(() => go()).observe(box); go(); redraws.push(() => go(true)); }
+const lbl = (svg, x, y, s, cls = "lab", anchor = "start") => { const t = el("text", { x, y, class: cls, "text-anchor": anchor }, svg); t.textContent = s; return t; };
+const isDark = () => { const r = document.documentElement; return r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; };
+document.getElementById("theme").onclick = () => { const r = document.documentElement; r.dataset.theme = isDark() ? "light" : "dark"; redraws.forEach(f => f()); };
+
+/* hero mark: a steam engine on the sea wall, waves below */
+(() => { const g = document.getElementById("heroMark");
+  [98, 106, 114].forEach((y, i) => el("path", { d: `M0 ${y} q12 -5 25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0`, fill: "none", stroke: "var(--sea)", "stroke-width": 2.4, opacity: 0.85 - i * 0.25 }, g));
+  el("rect", { x: 0, y: 84, width: 200, height: 6, fill: "var(--d5)" }, g);
+  el("rect", { x: 40, y: 50, width: 80, height: 26, rx: 3, fill: "var(--fg)" }, g);
+  el("rect", { x: 112, y: 36, width: 34, height: 40, fill: "var(--rail)" }, g);
+  el("rect", { x: 118, y: 42, width: 22, height: 13, fill: "var(--bg)" }, g);
+  el("rect", { x: 52, y: 32, width: 10, height: 20, fill: "var(--fg)" }, g);
+  [[60, 22, 7], [72, 13, 9], [88, 8, 11]].forEach(([x, y, r]) => el("circle", { cx: x, cy: y, r, fill: "var(--muted)", opacity: 0.45 }, g));
+  [58, 92, 130].forEach(x => el("circle", { cx: x, cy: 78, r: 7, fill: "var(--bg)", stroke: "var(--fg)", "stroke-width": 3 }, g));
+  el("rect", { x: 150, y: 58, width: 40, height: 18, rx: 2, fill: "var(--sea)" }, g);
+  el("circle", { cx: 160, cy: 78, r: 5, fill: "var(--fg)" }, g); el("circle", { cx: 180, cy: 78, r: 5, fill: "var(--fg)" }, g);
+})();
+
+/* ===== map ===== */
+const DEC = [[1830, "--d0", "1830s"], [1840, "--d1", "1840s"], [1850, "--d2", "1850s"], [1860, "--d3", "1860s"], [1870, "--d4", "1870s"], [1880, "--d5", "1880 to 1909"]];
+const decCol = y => css(DEC[Math.max(0, Math.min(5, Math.floor((y - 1830) / 10)))][1]);
+const RES = D.resorts.map(a => ({ name: a[0], lat: a[1], lng: a[2], ry: a[3], p1801: a[4], p1911: a[5], before: a[6], after: a[7], station: a[8], title: a[9], key: "resort:" + a[0] }));
+let lmap, tiles, mk = [], year = 1911, timer = null;
+function tileUrl() { return `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${isDark() ? "Dark" : "Light"}_Gray_Base/MapServer/tile/{z}/{y}/{x}`; }
+function rad(t) { const z = lmap.getZoom(), f = Math.pow(1.3, Math.min(z, 10) - 6); return t.p1911 ? Math.max(5, Math.min(22, Math.sqrt(t.p1911) / 12)) * f : 3.5 * f; }
+function mstyle(t) { const on = t.ry && t.ry <= year; const c = t.ry ? decCol(t.ry) : css("--nr");
+  return { radius: rad(t), fillColor: c, fillOpacity: on ? 0.85 : 0, color: on ? css("--bg") : c, weight: on ? 1 : 1.5, opacity: t.ry ? 1 : 0.8 }; }
+function series(key) { return D.series[key] || []; }
+function popup(t) { const s = series(t.key); const row = (k, v) => v == null ? "" : `<dt>${k}</dt><dd>${v}</dd>`;
+  const pick = y => { const r = s.find(x => x[0] === y); return r ? fmt(r[1]) : null; };
+  return `<div class="pop"><b class="t">${esc(t.name)}</b><div class="c">${t.ry ? "Railway " + t.ry : "No station within 3 km"}</div><dl>${row("Station", t.station ? esc(t.station) : null)}${row("1801", pick(1801))}${row("1851", pick(1851))}${row("1881", pick(1881))}${row("1911", pick(1911))}${row("Growth before", t.before != null ? f1(t.before) + "% a year" : null)}${row("Growth after", t.after != null ? f1(t.after) + "% a year" : null)}</dl>${s.length ? '<div class="note">Census parish or township figures, A Vision of Britain through Time.</div>' : '<div class="note">No census series found for this resort.</div>'}</div>`; }
+function legend() { document.getElementById("legend").innerHTML = "<span>First station:</span>" + DEC.map(d => `<span><i style="background:var(${d[1]})"></i>${d[2]}</span>`).join("") + `<span><i style="border:1.5px solid var(--nr)"></i>None within 3 km</span><span>Hollow: not yet open</span>`; }
+function restyle() { mk.forEach(m => m.setStyle(mstyle(m.t))); document.getElementById("yr").textContent = year; }
+(() => {
+  if (!window.L) { document.getElementById("lmap").innerHTML = '<p style="padding:16px">The map library did not load.</p>'; return; }
+  lmap = L.map("lmap", { preferCanvas: true, zoomSnap: 0.5, minZoom: 5, maxZoom: 13, scrollWheelZoom: false });
+  lmap.fitBounds([[50.0, -6.5], [58.6, 1.8]], { padding: innerWidth < 600 ? [0, 0] : [10, 10] });
+  tiles = L.tileLayer(tileUrl(), { attribution: "Tiles &copy; Esri", maxZoom: 16 }).addTo(lmap);
+  const rend = L.canvas({ padding: 0.5, tolerance: 4 });
+  [...RES].sort((a, b) => (b.p1911 || 0) - (a.p1911 || 0)).forEach(t => { const m = L.circleMarker([t.lat, t.lng], { renderer: rend }); m.t = t; m.setStyle(mstyle(t)); m.bindPopup(() => popup(t), { maxWidth: 300 }); m.addTo(lmap); mk.push(m); });
+  lmap.on("zoomend", restyle);
+  lmap.on("click focus", () => lmap.scrollWheelZoom.enable());
+  lmap.getContainer().addEventListener("mouseleave", () => lmap.scrollWheelZoom.disable());
+  legend(); restyle();
+  const sl = document.getElementById("year"), pb = document.getElementById("play");
+  sl.oninput = () => { year = +sl.value; restyle(); };
+  const stop = () => { clearInterval(timer); timer = null; pb.textContent = "▶ Play"; pb.setAttribute("aria-pressed", "false"); };
+  pb.onclick = () => { if (timer) { stop(); return; } if (+sl.value >= 1911) sl.value = 1825; year = +sl.value; restyle(); pb.textContent = "❚❚ Pause"; pb.setAttribute("aria-pressed", "true");
+    timer = setInterval(() => { if (year >= 1911) { stop(); return; } year += 1; sl.value = year; restyle(); }, 160); };
+  redraws.push(() => { tiles.setUrl(tileUrl()); restyle(); });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => redraws.forEach(f => f()));
+})();
+
+/* ===== arrivals by decade ===== */
+resp(document.getElementById("decades"), (W, sm) => {
+  const rows = R.arrival.by_decade, H = 220, m = { l: 34, r: 8, t: 14, b: 30 }, svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+  const max = Math.max(...rows.map(r => r.n)), bw = (W - m.l - m.r) / rows.length;
+  const y = v => H - m.b - v / max * (H - m.t - m.b);
+  [0, 20, 40].forEach(v => { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: css("--rule") }, svg); lbl(svg, m.l - 6, y(v) + 4, v, "lab m s", "end"); });
+  rows.forEach((r, i) => { const x = m.l + i * bw + 3; const b = el("rect", { x, y: y(r.n), width: bw - 6, height: H - m.b - y(r.n), fill: decCol(r.decade) }, svg);
+    hover(b, `<b>${r.decade}s</b><br>${r.n} resorts got a station`); lbl(svg, x + (bw - 6) / 2, y(r.n) - 4, r.n, "lab s", "middle");
+    lbl(svg, x + (bw - 6) / 2, H - 10, sm ? "'" + String(r.decade).slice(2) : r.decade + "s", "lab m s", "middle"); });
+  document.getElementById("decades").appendChild(svg);
+});
+
+/* ===== distance bands ===== */
+resp(document.getElementById("dist"), (W, sm) => {
+  const rows = R.distance.bands, labs = ["Under 50 km", "50 to 100 km", "100 to 150 km", "Over 150 km"], H = 190, m = { l: sm ? 104 : 120, r: 70, t: 8, b: 26 }, svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+  const x = v => m.l + (v - 1840) / (1880 - 1840) * (W - m.l - m.r), bh = (H - m.t - m.b) / rows.length;
+  [1840, 1850, 1860, 1870, 1880].forEach(v => { el("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, stroke: css("--rule") }, svg); lbl(svg, x(v), H - 8, v, "lab m s", "middle"); });
+  rows.forEach((r, i) => { const yy = m.t + i * bh + 6; const b = el("rect", { x: x(1840), y: yy, width: x(r.median_year) - x(1840), height: bh - 12, fill: css("--sea"), opacity: 0.35 + i * 0.18 }, svg);
+    hover(b, `<b>${labs[i]}</b><br>median first station ${r.median_year}<br>${r.n} resorts`);
+    lbl(svg, m.l - 8, yy + (bh - 12) / 2 + 4, labs[i], "lab", "end"); lbl(svg, x(r.median_year) + 6, yy + (bh - 12) / 2 + 4, Math.round(r.median_year) + " (" + r.n + ")", "lab b"); });
+  document.getElementById("dist").appendChild(svg);
+});
+
+/* ===== pre-1831 strip plot ===== */
+resp(document.getElementById("pre"), (W, sm) => {
+  const G = [["resort", "Resorts", "--sea"], ["inland", "Inland towns", "--inl"], ["inland_wikidata", "Inland villages", "--wd"]];
+  const H = 250, m = { l: sm ? 100 : 120, r: 12, t: 10, b: 30 }, svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+  const lo = -1.5, hi = 8, x = v => m.l + (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (W - m.l - m.r), bh = (H - m.t - m.b) / 3;
+  (sm ? [0, 2, 4, 6, 8] : [-1, 0, 2, 4, 6, 8]).forEach(v => { el("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, stroke: v === 0 ? css("--muted") : css("--rule") }, svg); lbl(svg, x(v), H - 8, v + "%", "lab m s", "middle"); });
+  G.forEach(([g, lab, c], i) => { const pts = D.pre.filter(p => p[1] === g), cy = m.t + i * bh + bh / 2;
+    lbl(svg, m.l - 8, cy + 4, sm ? lab.replace("Inland ", "Inland ").replace("Inland villages", "Villages") : lab, "lab", "end");
+    pts.forEach((p, j) => { const jit = ((j * 37) % 23 - 11) / 11 * (bh * 0.3); const d = el("circle", { cx: x(p[2]), cy: cy + jit, r: g === "inland_wikidata" ? 2.2 : 3.6, fill: css(c), opacity: g === "inland_wikidata" ? 0.45 : 0.8 }, svg);
+      if (g !== "inland_wikidata") hover(d, `<b>${esc(p[0])}</b><br>${p[2].toFixed(2)}% a year, 1801 to 1831`); });
+    const med = R.pre1831[g].median; el("line", { x1: x(med), x2: x(med), y1: cy - bh * 0.42, y2: cy + bh * 0.42, stroke: css("--fg"), "stroke-width": 2.5 }, svg);
+    lbl(svg, x(med) + 5, cy - bh * 0.42 + 2, med.toFixed(2) + "%", "lab b s"); });
+  document.getElementById("pre").appendChild(svg);
+});
+
+/* ===== event chart ===== */
+let evMode = "both";
+document.querySelectorAll("[data-ev]").forEach(b => b.onclick = () => { evMode = b.dataset.ev; document.querySelectorAll("[data-ev]").forEach(x => x.setAttribute("aria-pressed", x === b)); redraws.forEach(f => f()); });
+resp(document.getElementById("event"), (W, sm) => {
+  const G = [["resort", "Resorts", "--sea"], ["inland", "Inland towns", "--inl"]].concat(evMode === "wd" ? [["inland_wikidata", "Inland villages", "--wd"]] : []);
+  const H = 320, m = { l: 40, r: 12, t: 26, b: 44 }, svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+  const x = k => m.l + (k + 6) / 13 * (W - m.l - m.r), lo = -0.5, hi = 4, y = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
+  el("rect", { x: x(-0.5), y: m.t, width: x(0.5) - x(-0.5), height: H - m.t - m.b, fill: css("--rail"), opacity: 0.12 }, svg);
+  lbl(svg, x(0), m.t - 8, "railway opens", "lab s", "middle").setAttribute("fill", css("--rail"));
+  [0, 1, 2, 3, 4].forEach(v => { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v === 0 ? css("--muted") : css("--rule") }, svg); lbl(svg, m.l - 6, y(v) + 4, v + "%", "lab m s", "end"); });
+  for (let k = -6; k <= 7; k++) if (!sm || k % 2 === 0) lbl(svg, x(k), H - m.b + 16, (k > 0 ? "+" : "") + k, "lab m s", "middle");
+  lbl(svg, (m.l + W - m.r) / 2, H - 6, "census decades from the railway", "lab m s", "middle");
+  G.forEach(([g, lab, c], gi) => { const pts = R.event[g]; let d = ""; pts.forEach((p, i) => d += (i ? "L" : "M") + x(p.k) + " " + y(p.mean));
+    el("path", { d, fill: "none", stroke: css(c), "stroke-width": g === "resort" ? 3 : 2, "stroke-dasharray": g === "inland_wikidata" ? "4 3" : null }, svg);
+    pts.forEach(p => { const dot = el("circle", { cx: x(p.k), cy: y(p.mean), r: g === "resort" ? 5 : 4, fill: css(c), stroke: css("--bg"), "stroke-width": 1.5 }, svg);
+      hover(dot, `<b>${lab}, decade ${p.k > 0 ? "+" : ""}${p.k}</b><br>mean ${p.mean.toFixed(2)}% a year<br>median ${p.median.toFixed(2)}%<br>${p.n} places`);
+      if (g === "resort" && !sm) lbl(svg, x(p.k), y(-0.5) - 2, p.n, "lab m s", "middle"); });
+    if (g === "resort" && !sm) lbl(svg, m.l - 6, y(-0.5) - 2, "n", "lab m s", "end");
+    const lx = sm ? m.l + 6 : m.l + 8, ly = m.t + 14 + gi * 16; el("rect", { x: lx, y: ly - 8, width: 14, height: 4, fill: css(c) }, svg); lbl(svg, lx + 20, ly - 2, lab, "lab s"); });
+  document.getElementById("event").appendChild(svg);
+});
+
+/* ===== coefficients ===== */
+resp(document.getElementById("coef"), (W, sm) => {
+  const rows = R.reg.resort_event, H = 260, m = { l: 40, r: 12, t: 12, b: 40 }, svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+  const x = k => m.l + (k + 4.5) / 10 * (W - m.l - m.r), lo = -3, hi = 3, y = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
+  [-3, -2, -1, 0, 1, 2, 3].forEach(v => { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v === 0 ? css("--fg") : css("--rule") }, svg); lbl(svg, m.l - 6, y(v) + 4, (v > 0 ? "+" : "") + v, "lab m s", "end"); });
+  rows.forEach(r => { const c = r.k === 0 ? css("--rail") : css("--sea");
+    if (r.k !== -1) el("line", { x1: x(r.k), x2: x(r.k), y1: y(Math.max(lo, r.lo)), y2: y(Math.min(hi, r.hi)), stroke: c, "stroke-width": 2 }, svg);
+    const d = el("circle", { cx: x(r.k), cy: y(r.coef), r: 5.5, fill: r.k === -1 ? css("--bg") : c, stroke: c, "stroke-width": 2 }, svg);
+    hover(d, r.k === -1 ? "<b>Decade before the railway</b><br>reference (set to 0)" : `<b>Decade ${r.k > 0 ? "+" : ""}${r.k}${r.k === -4 ? " or earlier" : r.k === 5 ? " or later" : ""}</b><br>${sg(r.coef)} points a year<br>95% interval ${r.lo.toFixed(2)} to ${r.hi.toFixed(2)}`);
+    lbl(svg, x(r.k), H - m.b + 16, (r.k > 0 ? "+" : "") + r.k, "lab m s", "middle"); });
+  lbl(svg, (m.l + W - m.r) / 2, H - 6, "census decades from the railway", "lab m s", "middle");
+  document.getElementById("coef").appendChild(svg);
+});
+
+/* ===== dumbbell ===== */
+resp(document.getElementById("dumb"), (W, sm) => {
+  const rows = D.pp, rh = 19, m = { l: sm ? 128 : 160, r: 16, t: 24, b: 30 }, H = m.t + m.b + rows.length * rh, svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+  const lo = -2, hi = 6, x = v => m.l + (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (W - m.l - m.r);
+  [-2, 0, 2, 4, 6].forEach(v => { el("line", { x1: x(v), x2: x(v), y1: m.t - 6, y2: H - m.b, stroke: v === 0 ? css("--muted") : css("--rule") }, svg); lbl(svg, x(v), H - 10, v + "%", "lab m s", "middle"); lbl(svg, x(v), m.t - 10, v + "%", "lab m s", "middle"); });
+  rows.forEach((r, i) => { const yy = m.t + i * rh + rh / 2, up = r.change > 0, c = up ? css("--sea") : css("--inl");
+    const g = el("g", {}, svg);
+    el("line", { x1: x(r.before), x2: x(r.after), y1: yy, y2: yy, stroke: c, "stroke-width": 2.5, opacity: 0.7 }, g);
+    el("circle", { cx: x(r.before), cy: yy, r: 4.2, fill: css("--bg"), stroke: c, "stroke-width": 2 }, g);
+    el("circle", { cx: x(r.after), cy: yy, r: 4.6, fill: c }, g);
+    lbl(g, m.l - 8, yy + 4, r.place.length > (sm ? 16 : 22) ? r.place.slice(0, sm ? 15 : 21) + "." : r.place, "lab s", "end");
+    hover(g, `<b>${esc(r.place)}</b> (railway ${r.rail_year})<br>before ${r.before.toFixed(2)}% a year<br>after ${r.after.toFixed(2)}% a year<br>change ${sg(r.change)}`); });
+  document.getElementById("dumb").appendChild(svg);
+});
+
+/* ===== top table ===== */
+(() => { const t = document.getElementById("toptab");
+  t.innerHTML = "<tr><th>Resort</th><th class='num'>1801</th><th class='num'>1911</th><th class='num'>Growth ×</th><th class='num'>Railway</th></tr>" +
+    R.long.top_resorts.map(r => { const s = RES.find(x => x.name === r.place); return `<tr><td>${esc(r.place)}</td><td class="num">${fmt(r.pop1801)}</td><td class="num">${fmt(r.pop1911)}</td><td class="num">${r.chain.toFixed(1)}</td><td class="num">${s && s.ry ? s.ry : ""}</td></tr>`; }).join(""); })();
+
+/* ===== small series chart ===== */
+function spark(key, ry, w = 300, h = 120) { const s = series(key).filter(r => r[1] > 0); const svg = el("svg", { viewBox: `0 0 ${w} ${h}` }); if (s.length < 2) return svg;
+  const m = { l: 44, r: 8, t: 8, b: 20 }, x = yr => m.l + (yr - 1801) / 110 * (w - m.l - m.r);
+  const lmin = Math.log10(Math.min(...s.map(r => r[1]))), lmax = Math.log10(Math.max(...s.map(r => r[1]))), pad = Math.max(0.15, (lmax - lmin) * 0.08);
+  const y = v => m.t + (lmax + pad - Math.log10(v)) / (lmax - lmin + 2 * pad) * (h - m.t - m.b);
+  if (ry) { el("line", { x1: x(ry), x2: x(ry), y1: m.t, y2: h - m.b, stroke: css("--rail"), "stroke-width": 2 }, svg); lbl(svg, x(ry) + 3, m.t + 9, ry, "lab s").setAttribute("fill", css("--rail")); }
+  let d = ""; s.forEach((r, i) => d += (i && r[0] - s[i - 1][0] <= 10 ? "L" : "M") + x(r[0]) + " " + y(r[1]));
+  el("path", { d, fill: "none", stroke: css("--sea"), "stroke-width": 2.5 }, svg);
+  s.forEach(r => el("circle", { cx: x(r[0]), cy: y(r[1]), r: 2.6, fill: css("--sea") }, svg));
+  [s[0], s[s.length - 1]].forEach((r, i) => lbl(svg, i ? x(r[0]) - 2 : x(r[0]) + 2, y(r[1]) + (i ? -6 : 14), fmt(r[1]), "lab s b", i ? "end" : "start"));
+  [[1801, "start"], [1851, "middle"], [1911, "end"]].forEach(([v, a]) => lbl(svg, x(v), h - 4, v, "lab m s", a));
+  return svg; }
+
+/* ===== find your resort ===== */
+(() => { const dl = document.getElementById("names"); RES.forEach(r => { const o = document.createElement("option"); o.value = r.name; dl.appendChild(o); });
+  const q = document.getElementById("q"), out = document.getElementById("findout");
+  const show = () => { const v = q.value.trim().toLowerCase(); if (!v) { out.innerHTML = "Start typing a resort name."; return; }
+    const r = RES.find(x => x.name.toLowerCase() === v) || RES.find(x => x.name.toLowerCase().startsWith(v)); if (!r) { out.innerHTML = "No resort by that name on the list."; return; }
+    const s = series(r.key);
+    out.innerHTML = `<b class="t">${esc(r.name)}</b>${r.ry ? "First station within 3 km: " + r.ry + (r.station ? " (" + esc(r.station) + ")" : "") : "No station within 3 km in my data."}<br>` +
+      (s.length ? `Census figures for ${s.length} years. ${r.before != null ? "Growth before the railway " + f1(r.before) + "% a year, after " + f1(r.after) + "%." : ""}` : "No census series found for this resort (often a suburb, or part of a larger parish).");
+    if (s.length > 1) out.appendChild(spark(r.key, r.ry, 560, 150)); };
+  q.addEventListener("input", show); redraws.push(show); })();
+
+/* ===== case cards ===== */
+(() => { const box = document.getElementById("cards");
+  const C = [["Skegness", "Built by the railway"], ["Weston-super-Mare", "Racing before the line"], ["Brighton", "Already a town"], ["Llandudno", "From village to town"], ["Frinton-on-Sea", "From 31 people"], ["Margate", "An old bathing town"]];
+  const draw = () => { box.innerHTML = ""; C.forEach(([n, tag]) => { const c = R.cases[n], s = c.series, d = document.createElement("div"); d.className = "card";
+    d.innerHTML = `<b>${esc(n)}</b>${tag}<div class="big">${fmt(s[0].pop)} → ${fmt(s[s.length - 1].pop)}<span>${s[0].year} to ${s[s.length - 1].year}; railway ${c.rail_year}</span></div>`;
+    d.appendChild(spark("resort:" + n, c.rail_year)); box.appendChild(d); }); };
+  draw(); redraws.push(draw); })();
+</script>
+</body>
+</html>
