@@ -1,0 +1,34 @@
+place	status	note
+Bamburgh	skipped	VoB unit found is Bamburgh Castle township (tiny), not the village
+Brixham	no figures	POP_CHANGE page returned no numbers
+Blackpool	partial	VoB County Borough series starts 1911
+Burnham-on-Sea	partial	VoB Urban District series starts 1921; Burnham parish not identified
+Hastings	skipped	Town made of several parishes in VoB (St Helens, St Mary Magdalen, St Andrew and others); no single series
+Goring-by-Sea	no figures	only POP_CHANGE page found
+Dartmouth	no figures	only POP_CHANGE page found
+Herne Bay	partial	Civil parish from 1901 only
+Bognor Regis	partial	Civil parish from 1901 only
+Bournemouth	partial	Civil parish from 1901 only
+Folkestone	partial	Civil parish from 1891 only
+Formby	partial	Chapelry series from 1881 only
+Aberystwyth	partial	Parish series from 1881 only
+Poole	partial	Civil parish 1911 only
+Rhyl	partial	Parish series 1901 only
+St Ives	resolved	Unit 10260140 is St Ives, Huntingdonshire (not used); unit 10160649 (St Ives, Cornwall) used instead
+South Shields	skipped	Township series broken by boundary changes (5,946 in 1891, 97,263 in 1901)
+Seaton Carew	partial	Township series from 1881 only (not recorded)
+Beer	covered	Shares the Seaton and Beer parish with Seaton; counted once, under Seaton
+inland: Gillingham	skipped	VoB unit 10100823 is Gillingham, Kent (52,154 in 1911), not the sampled Gillingham, Dorset
+inland: Bewdley	partial	Chapelry series from 1881 only (not recorded)
+inland: Cheadle, Ashford	skipped	Name shared by several parishes; could not tell which unit
+inland: Rickmansworth, Woodhall Spa, Great Harwood, Leominster	not found	No parish Total Population page returned by search
+inland: Market Deeping, Sawbridgeworth, Waltham Abbey, Boroughbridge, Castle Cary, Meltham, Harleston, Stow-on-the-Wold	not found	No parish Total Population page returned by search
+inland: Thetford	no figures	Page returned no table
+inland: Pudsey	partial	Chapelry series from 1881 only (not recorded)
+inland: Royton	skipped	Unit returned (82 people in 1881) is not the town
+inland: Sale	skipped	Only Ashton upon Mersey township found, not Sale
+inland: Denton	partial	Chapelry series from 1881 only (not recorded)
+inland: Earl Shilton, Barrowford, Attleborough, Cotgrave, Farnborough, Bingham, Craven Arms, Baldock, Warminster, Crughywel, Ware, Kington, Luton, Watlington, Bicester, Hertford, Chorleywood, Wixams, Sandhurst	not found or not tried	No parish Total Population page returned by the batch searches
+Saltburn-by-the-Sea	partial	Parish created later; series from 1901 only
+Blackpool (Layton with Warbreck)	not found	Only gazetteer pages returned; Blackpool's 1801 figure taken from its Wikipedia article instead
+Exmouth	not found	No population page for Littleham or Withycombe Raleigh returned

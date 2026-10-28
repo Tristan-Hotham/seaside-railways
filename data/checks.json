@@ -1,0 +1,53 @@
+{
+ "n_checks": 5,
+ "n_match": 5,
+ "checks": [
+  {
+   "place": "Brighton",
+   "year": 1801,
+   "wikipedia": 7339,
+   "vision_of_britain": 7339,
+   "match": true,
+   "article": "Brighton",
+   "quote": "from 7,339 in 1801 to 46,661 in 1841"
+  },
+  {
+   "place": "Brighton",
+   "year": 1841,
+   "wikipedia": 46661,
+   "vision_of_britain": 46661,
+   "match": true,
+   "article": "Brighton",
+   "quote": "from 7,339 in 1801 to 46,661 in 1841"
+  },
+  {
+   "place": "Skegness",
+   "year": 1801,
+   "wikipedia": 134,
+   "vision_of_britain": 134,
+   "match": true,
+   "article": "Skegness",
+   "quote": "recorded a population of 134"
+  },
+  {
+   "place": "Skegness",
+   "year": 1911,
+   "wikipedia": 3775,
+   "vision_of_britain": 3775,
+   "match": true,
+   "article": "Skegness",
+   "quote": "By 1911, the population had reached 3,775"
+  },
+  {
+   "place": "Great Yarmouth",
+   "year": 1801,
+   "wikipedia": 14845,
+   "vision_of_britain": 14845,
+   "match": true,
+   "article": "List of towns and cities in England by historical population",
+   "quote": "[[Great Yarmouth]]||14,845"
+  }
+ ],
+ "pairs_earlier_equals_previous": 435,
+ "pairs_earlier_differs": 54
+}
